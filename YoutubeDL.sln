@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29920.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeDL", "YoutubeDL.csproj", "{49828B01-1A4D-49E4-9C47-5368DFEAD024}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49828B01-1A4D-49E4-9C47-5368DFEAD024}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D3CE61D2-1DDA-4320-A1EF-1411CCAFFEE1}
+	EndGlobalSection
+EndGlobal

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -7,13 +9,16 @@ using Android.Runtime;
 using Android.Support.Design.Widget;
 using Android.Support.V7.App;
 using Android.Views;
-using Android.Widget;
+using YoutubeExplode;
+using YoutubeExplode.Videos;
+using YoutubeExplode.Videos.Streams;
+using Environment = System.Environment;
 
 namespace YoutubeDL {
 	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
 	[IntentFilter(
-		new[] { Android.Content.Intent.ActionSend },
-		Categories = new[] { Android.Content.Intent.CategoryDefault },
+		new[] { Intent.ActionSend },
+		Categories = new[] { Intent.CategoryDefault },
 		DataHosts = new[] { "youtube.com", "youtu.be" },
 		DataMimeType = "text/plain")]
 	public class MainActivity : AppCompatActivity {
@@ -30,6 +35,19 @@ namespace YoutubeDL {
 
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
+				Task.Run(async () => {
+					var client = new YoutubeClient();
+					var video = await client.Videos.GetAsync(new VideoId(youtubeUrl));
+					AudioOnlyStreamInfo audioStream = (await client.Videos.Streams.GetManifestAsync(new VideoId(youtubeUrl))).GetAudioOnly().First();
+
+					string fileName =
+						//Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), video.Title + "." + audioStream.Container.Name)
+						"/storage/emulated/0/Documents/" + video.Title + "." + audioStream.Container
+						;
+					using var fileStream = File.Create(fileName, 4096);
+					await client.Videos.Streams.DownloadAsync(audioStream, fileName);
+					System.Diagnostics.Debugger.Break();
+				});
 			}
 		}
 

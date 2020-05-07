@@ -13,6 +13,7 @@ using Android.Support.V4.App;
 using Android.Support.V4.Content;
 using Android.Support.V7.App;
 using Android.Views;
+using Android.Widget;
 using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
@@ -47,25 +48,43 @@ namespace YoutubeDL {
 
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
+				Finish(); // doesn't work
 				Task.Run(async () => {
 					try {
+						var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
 						var client = new YoutubeClient();
 						var video = await client.Videos.GetAsync(new VideoId(youtubeUrl));
-						AudioOnlyStreamInfo audioStream = (await client.Videos.Streams.GetManifestAsync(new VideoId(youtubeUrl))).GetAudioOnly().First();
+						var audioStream = (await client.Videos.Streams.GetManifestAsync(new VideoId(youtubeUrl))).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
 
-						string fileName = Path.Combine(
-							Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath,
-							video.Title + "." + audioStream.Container
-						);
+						if (audioStream != null) {
+							string fileName = Path.Combine(
+								Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath,
+								video.Title + ".mp3"
+							);
 
-						var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
-							.SetContentTitle(video.Title)
-							.SetProgress(0, 100, false)
-							.SetSmallIcon(Resource.Mipmap.ic_launcher);
+							var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
+								.SetContentTitle(video.Title)
+								.SetProgress(0, 100, false)
+								.SetSmallIcon(Resource.Mipmap.ic_launcher);
 
-						var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
-						await client.Videos.Streams.DownloadAsync(audioStream, fileName, new DownloadProgress(manager, notif));
-						manager.Cancel(1337);
+							await client.Videos.Streams.DownloadAsync(audioStream, fileName, new DownloadProgress(manager, notif));
+							manager.Cancel(1337);
+							manager.Notify(1338,
+								new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.finished")
+									.SetContentTitle(video.Title)
+									.SetSubText("Finished downloading")
+									.SetSmallIcon(Resource.Mipmap.ic_launcher)
+									.Build()
+							);
+						} else {
+							manager.Notify(1339,
+								new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.failed")
+									.SetContentTitle(video.Title)
+									.SetSubText("Cannot download: no audio streams")
+									.SetSmallIcon(Resource.Mipmap.ic_launcher)
+									.Build()
+							);
+						}
 					} catch (Exception e) {
 						System.Diagnostics.Debugger.Break();
 					}
@@ -84,7 +103,7 @@ namespace YoutubeDL {
 			}
 
 			public void Report(double progress) {
-				m_Builder.SetProgress(100, (int) progress * 100, false);
+				m_Builder.SetProgress(100, (int) (progress * 100), false);
 				m_Manager.Notify(1337, m_Builder.Build());
 			}
 		}

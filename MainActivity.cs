@@ -2,11 +2,15 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Android;
 using Android.App;
 using Android.Content;
+using Android.Content.PM;
 using Android.OS;
 using Android.Runtime;
 using Android.Support.Design.Widget;
+using Android.Support.V4.App;
+using Android.Support.V4.Content;
 using Android.Support.V7.App;
 using Android.Views;
 using YoutubeExplode;
@@ -33,20 +37,37 @@ namespace YoutubeDL {
 			FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
 			fab.Click += FabOnClick;
 
+			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.WriteExternalStorage) != (int) Permission.Granted) {
+				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.WriteExternalStorage }, 0);
+			}
+
+			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.ReadExternalStorage) != (int) Permission.Granted) {
+				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.ReadExternalStorage }, 0);
+			}
+
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
 				Task.Run(async () => {
-					var client = new YoutubeClient();
-					var video = await client.Videos.GetAsync(new VideoId(youtubeUrl));
-					AudioOnlyStreamInfo audioStream = (await client.Videos.Streams.GetManifestAsync(new VideoId(youtubeUrl))).GetAudioOnly().First();
+					try {
+						var client = new YoutubeClient();
+						var video = await client.Videos.GetAsync(new VideoId(youtubeUrl));
+						AudioOnlyStreamInfo audioStream = (await client.Videos.Streams.GetManifestAsync(new VideoId(youtubeUrl))).GetAudioOnly().First();
 
-					string fileName =
-						//Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), video.Title + "." + audioStream.Container.Name)
-						"/storage/emulated/0/Documents/" + video.Title + "." + audioStream.Container
-						;
-					using var fileStream = File.Create(fileName, 4096);
-					await client.Videos.Streams.DownloadAsync(audioStream, fileName);
-					System.Diagnostics.Debugger.Break();
+						string fileName = Path.Combine(
+							Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath,
+							video.Title + "." + audioStream.Container
+						);
+
+						/*
+						var notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl.progress")
+							.SetContentTitle(video.Title)
+							.SetProgress(0, 100, false)
+							.Build();*/
+
+						await client.Videos.Streams.DownloadAsync(audioStream, fileName);
+					} catch (Exception e) {
+						System.Diagnostics.Debugger.Break();
+					}
 				});
 			}
 		}

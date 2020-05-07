@@ -58,17 +58,34 @@ namespace YoutubeDL {
 							video.Title + "." + audioStream.Container
 						);
 
-						/*
-						var notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl.progress")
+						var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
 							.SetContentTitle(video.Title)
 							.SetProgress(0, 100, false)
-							.Build();*/
+							.SetSmallIcon(Resource.Mipmap.ic_launcher);
 
-						await client.Videos.Streams.DownloadAsync(audioStream, fileName);
+						var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
+						await client.Videos.Streams.DownloadAsync(audioStream, fileName, new DownloadProgress(manager, notif));
+						manager.Cancel(1337);
 					} catch (Exception e) {
 						System.Diagnostics.Debugger.Break();
 					}
 				});
+			}
+		}
+
+		private class DownloadProgress : IProgress<double> {
+			private readonly NotificationManager m_Manager;
+			private readonly NotificationCompat.Builder m_Builder;
+
+			public DownloadProgress(NotificationManager manager, NotificationCompat.Builder builder) {
+				m_Manager = manager;
+				m_Builder = builder;
+				m_Manager.Notify(1337, m_Builder.Build());
+			}
+
+			public void Report(double progress) {
+				m_Builder.SetProgress(100, (int) progress * 100, false);
+				m_Manager.Notify(1337, m_Builder.Build());
 			}
 		}
 

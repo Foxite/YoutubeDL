@@ -6,7 +6,7 @@ Not affiliated with the popular command line tool.
 ## Installation
 This app will likely never be released to Google Play. For an explanation, try to look up "youtube downloader" on the play store, and count the results you get.
 
-You must either clone this project, build the app, and install it on your device, or ask me to make a build for you.
+You must either clone this project, build the app, and install it on your device, or [download a released apk](https://github.com/Foxite/YoutubeDL/releases).
 
 ## Instructions
 Once installed, usage is very simple:

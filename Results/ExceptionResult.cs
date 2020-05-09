@@ -1,4 +1,5 @@
-﻿using YoutubeExplode.Videos;
+﻿using System;
+using YoutubeExplode.Videos;
 
 namespace YoutubeDL {
 	public class ExceptionResult : DownloadResult {
@@ -6,6 +7,10 @@ namespace YoutubeDL {
 		public override string NotificationChannel => "youtubedl.failed.exception";
 		public override string Message => "@string/notif_title_exception";
 
-		public ExceptionResult(VideoId video, string videoTitle) : base(video, videoTitle) { }
+		public Exception Exception { get; }
+
+		public ExceptionResult(VideoId video, string videoTitle, Exception exception) : base(video, videoTitle) {
+			Exception = exception;
+		}
 	}
 }

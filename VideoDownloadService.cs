@@ -41,13 +41,13 @@ namespace YoutubeDL {
 
 					await m_Client.Videos.Streams.DownloadAsync(audioStream, fileName, progress);
 
-					return new SuccessfulResult(videoId, video.Title);
+					return new SuccessfulResult(videoId, video.Title, fileName);
 				} else {
 					return new NoStreamsResult(videoId, video.Title);
 				}
 			} catch (Exception e) {
 				Log.Error(Util.LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + youtubeUrl);
-				return new ExceptionResult(videoId, video?.Title);
+				return new ExceptionResult(videoId, video?.Title, e);
 			}
 		}
 

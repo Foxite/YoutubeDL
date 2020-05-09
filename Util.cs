@@ -5,6 +5,8 @@ using Android.Content;
 
 namespace YoutubeDL {
 	public static class Util {
+		public const string LogTag = "FOXITE_YOUTUBE_DL";
+
 		public static T GetSystemService<T>(this Context context) where T : Java.Lang.Object {
 			return (T) context.GetSystemService(Java.Lang.Class.FromType(typeof(T)));
 		}

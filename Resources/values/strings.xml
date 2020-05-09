@@ -4,4 +4,5 @@
 	<string name="notif_title_finished">Finished downloading</string>
 	<string name="notif_title_no_streams">This video cannot be downloaded. A future update may fix this.</string>
 	<string name="notif_title_exception">Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.</string>
+	<string name="notif_pre_start">Downloading video...</string>
 </resources>

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Android;
 using Android.App;
@@ -11,11 +9,7 @@ using Android.Runtime;
 using Android.Support.V4.App;
 using Android.Support.V4.Content;
 using Android.Support.V7.App;
-using Android.Util;
 using Android.Views;
-using YoutubeExplode;
-using YoutubeExplode.Videos;
-using YoutubeExplode.Videos.Streams;
 
 namespace YoutubeDL {
 	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
@@ -25,8 +19,6 @@ namespace YoutubeDL {
 		DataHosts = new[] { "youtube.com", "youtu.be" },
 		DataMimeType = "text/plain")]
 	public class MainActivity : AppCompatActivity {
-		private const string LogTag = "FOXITE_YOUTUBE_DL";
-
 		private static int s_NextNotificationID;
 
 		protected override void OnCreate(Bundle savedInstanceState) {
@@ -45,8 +37,40 @@ namespace YoutubeDL {
 
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
+				int notificationID = s_NextNotificationID++;
+
 				// Don't run this on the main thread
-				Task.Run(() => DownloadVideo(youtubeUrl));
+				Task.Run(async () => {
+					var manager = this.GetSystemService<NotificationManager>();
+
+					var notifBuilder = new NotificationCompat.Builder(ApplicationContext, "youtubedl.download")
+						.SetSmallIcon(Resource.Mipmap.ic_launcher)
+						.SetContentText("@string/notif_pre_start")
+						.SetProgress(100, 0, true);
+
+					manager.Notify(notificationID, notifBuilder.Build());
+
+					VideoDownloadService.Connection connection = new VideoDownloadService.Connection();
+					Intent serviceIntent = new Intent(this, typeof(VideoDownloadService));
+					BindService(serviceIntent, connection, Bind.AutoCreate);
+
+					DownloadResult result = await connection.Binder.Service.DownloadVideo(youtubeUrl, new Progress<double>(p => {
+						notifBuilder.SetProgress(100, (int) (p * 100), false);
+						manager.Notify(notificationID, notifBuilder.SetOngoing(true).Build());
+					}));
+
+					UnbindService(connection);
+
+					manager.Notify(
+						notificationID,
+						new NotificationCompat.Builder(ApplicationContext, result.NotificationChannel)
+							.SetSmallIcon(Resource.Mipmap.ic_launcher)
+							.SetContentTitle(result.VideoTitle ?? result.Video.Value)
+							.SetOngoing(false)
+							.SetContentText(result.Message)
+							.Build()
+					);
+				});
 				Finish();
 			}
 		}
@@ -61,49 +85,6 @@ namespace YoutubeDL {
 			}
 		}
 
-		private async Task DownloadVideo(string youtubeUrl) {
-			int notificationID = s_NextNotificationID++;
-			var manager = this.GetSystemService<NotificationManager>();
-			var videoId = new VideoId(youtubeUrl);
-
-			void makeNotif(string title, int stringID, string channel) =>
-				// Doesn't work in emulator.
-				// Works fine in real device.
-				manager.Notify(notificationID,
-					new NotificationCompat.Builder(ApplicationContext, channel)
-						.SetContentTitle(title)
-						.SetContentText(Resources.GetString(stringID))
-						.SetSmallIcon(Resource.Mipmap.ic_launcher)
-						.Build()
-				);
-
-			try {
-				var client = new YoutubeClient();
-				var video = await client.Videos.GetAsync(videoId);
-				var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
-
-				if (audioStream != null) {
-					string fileName = Path.Combine(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath, Util.SanitizeFilename(video.Title) + ".mp3");
-
-					var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
-						.SetContentTitle(video.Title)
-						.SetProgress(0, 100, false)
-						.SetSmallIcon(Resource.Mipmap.ic_launcher);
-
-					await client.Videos.Streams.DownloadAsync(audioStream, fileName, new Progress<double>(p => {
-						notif.SetProgress(100, (int) (p * 100), false);
-						manager.Notify(notificationID, notif.Build());
-					}));
-
-					makeNotif(video.Title, Resource.String.notif_title_finished, "youtubedl.finished");
-				} else {
-					makeNotif(video.Title, Resource.String.notif_title_no_streams, "youtubedl.failed.nostreams");
-				}
-			} catch (Exception e) {
-				Log.Error(LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + videoId.Value);
-				makeNotif(videoId.Value, Resource.String.notif_title_exception, "youtubedl.failed.exception");
-			}
-		}
 
 		public override bool OnCreateOptionsMenu(IMenu menu) {
 			MenuInflater.Inflate(Resource.Menu.menu_main, menu);

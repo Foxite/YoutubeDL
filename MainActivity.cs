@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Android;
 using Android.App;
@@ -9,6 +10,7 @@ using Android.Runtime;
 using Android.Support.V4.App;
 using Android.Support.V4.Content;
 using Android.Support.V7.App;
+using Android.Util;
 using Android.Views;
 
 namespace YoutubeDL {
@@ -41,37 +43,44 @@ namespace YoutubeDL {
 
 				// Don't run this on the main thread
 				Task.Run(async () => {
-					var manager = this.GetSystemService<NotificationManager>();
+					try {
+						var manager = this.GetSystemService<NotificationManager>();
 
-					var notifBuilder = new NotificationCompat.Builder(ApplicationContext, "youtubedl.download")
-						.SetSmallIcon(Resource.Mipmap.ic_launcher)
-						.SetContentText("@string/notif_pre_start")
-						.SetProgress(100, 0, true);
-
-					manager.Notify(notificationID, notifBuilder.Build());
-
-					VideoDownloadService.Connection connection = new VideoDownloadService.Connection();
-					Intent serviceIntent = new Intent(this, typeof(VideoDownloadService));
-					BindService(serviceIntent, connection, Bind.AutoCreate);
-
-					DownloadResult result = await connection.Binder.Service.DownloadVideo(youtubeUrl, new Progress<double>(p => {
-						notifBuilder.SetProgress(100, (int) (p * 100), false);
-						manager.Notify(notificationID, notifBuilder.SetOngoing(true).Build());
-					}));
-
-					UnbindService(connection);
-
-					manager.Notify(
-						notificationID,
-						new NotificationCompat.Builder(ApplicationContext, result.NotificationChannel)
+						var notifBuilder = new NotificationCompat.Builder(ApplicationContext, "youtubedl.download")
 							.SetSmallIcon(Resource.Mipmap.ic_launcher)
-							.SetContentTitle(result.VideoTitle ?? result.Video.Value)
-							.SetOngoing(false)
-							.SetContentText(result.Message)
-							.Build()
-					);
+							.SetContentText("@string/notif_pre_start")
+							.SetProgress(100, 0, true);
+
+						manager.Notify(notificationID, notifBuilder.Build());
+
+						VideoDownloadService.Connection connection = new VideoDownloadService.Connection();
+						Intent serviceIntent = new Intent(ApplicationContext, typeof(VideoDownloadService));
+						StartService(serviceIntent);
+						bool bindResult = BindService(serviceIntent, connection, Bind.AutoCreate);
+
+						await Task.Delay(500);
+						DownloadResult result = await connection.Binder.Service.DownloadVideo(youtubeUrl, new Progress<double>(p => {
+							notifBuilder.SetProgress(100, (int) (p * 100), false);
+							manager.Notify(notificationID, notifBuilder.SetOngoing(true).Build());
+						}));
+
+						UnbindService(connection);
+						//StopService(serviceIntent); // ?
+
+						manager.Notify(
+							notificationID,
+							new NotificationCompat.Builder(ApplicationContext, result.NotificationChannel)
+								.SetSmallIcon(Resource.Mipmap.ic_launcher)
+								.SetContentTitle(result.VideoTitle ?? result.Video.Value)
+								.SetOngoing(false)
+								.SetContentText(result.Message)
+								.Build()
+						);
+					} catch (Exception e) {
+						Log.Error(Util.LogTag, e.ToStringDemystified());
+					}
 				});
-				Finish();
+				//Finish();
 			}
 		}
 

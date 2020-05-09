@@ -25,8 +25,8 @@ namespace YoutubeDL {
 		}
 
 		public override void OnDestroy() {
-			base.OnDestroy();
 			m_Client = null;
+			base.OnDestroy();
 		}
 
 		internal async Task<DownloadResult> DownloadVideo(string youtubeUrl, IProgress<double> progress) {

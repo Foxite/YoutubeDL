@@ -1,19 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-
-using Android.App;
 using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 
 namespace YoutubeDL {
 	public static class Util {
 		public static T GetSystemService<T>(this Context context) where T : Java.Lang.Object {
 			return (T) context.GetSystemService(Java.Lang.Class.FromType(typeof(T)));
+		}
+
+		public static string SanitizeFilename(string unsanitizedPath) {
+			char[] path = unsanitizedPath.ToCharArray();
+			char[] illegalCharacters = Path.GetInvalidFileNameChars();
+			for (int i = 0; i < path.Length; i++) {
+				if (illegalCharacters.Contains(path[i])) {
+					path[i] = '_';
+				}
+			}
+			return new string(path);
 		}
 	}
 }

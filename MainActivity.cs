@@ -81,7 +81,7 @@ namespace YoutubeDL {
 				var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
 
 				if (audioStream != null) {
-					string fileName = Path.Combine(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath, video.Title + ".mp3");
+					string fileName = Path.Combine(Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath, Util.SanitizeFilename(video.Title) + ".mp3");
 
 					var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
 						.SetContentTitle(video.Title)

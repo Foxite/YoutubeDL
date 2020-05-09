@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">YoutubeDL</string>
+    <string name="action_settings">Instellingen</string>
+	<string name="notif_title_finished">Download voltooid</string>
+	<string name="notif_title_no_streams">Deze video kan niet worden gedownload. Een toekomstige update kan dit oplossen.</string>
+	<string name="notif_title_exception">De video kon niet worden gedownload vanwege een onbekende fout. Als dit blijft gebeuren, neem contact op met de developer, en stuur de link naar de video die je wou downloaden.</string>
+</resources>

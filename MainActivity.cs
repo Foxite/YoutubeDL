@@ -67,6 +67,8 @@ namespace YoutubeDL {
 			var videoId = new VideoId(youtubeUrl);
 
 			void makeNotif(string title, int stringID, string channel) =>
+				// Doesn't work in emulator.
+				// Works fine in real device.
 				manager.Notify(notificationID,
 					new NotificationCompat.Builder(ApplicationContext, channel)
 						.SetContentTitle(title)

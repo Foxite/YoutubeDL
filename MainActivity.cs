@@ -101,7 +101,7 @@ namespace YoutubeDL {
 						}
 					} catch (Exception e) {
 						Log.Error(LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + videoId.Value);
-						makeNotif(videoId.Value, "Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.", "youtubedl.failed.exception");
+						makeNotif(e.GetType().Name, "Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.", "youtubedl.failed.exception");
 					}
 				});
 			}

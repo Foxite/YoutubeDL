@@ -53,6 +53,10 @@ namespace YoutubeDL {
 				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.ReadExternalStorage }, 0);
 			}
 
+			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.Internet) != (int) Permission.Granted) {
+				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.Internet }, 0);
+			}
+
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
 				Finish(); // doesn't work

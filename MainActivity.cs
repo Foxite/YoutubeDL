@@ -8,17 +8,14 @@ using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Runtime;
-using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V4.Content;
 using Android.Support.V7.App;
 using Android.Util;
 using Android.Views;
-using Android.Widget;
 using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
-using Environment = System.Environment;
 
 namespace YoutubeDL {
 	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
@@ -63,21 +60,27 @@ namespace YoutubeDL {
 				Task.Run(async () => {
 					int notificationID = s_NextNotificationID++;
 					var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
+					manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Default));
+
 					var videoId = new VideoId(youtubeUrl);
 
-					void makeNotif(string title, string text, string channel) =>
-						manager.Notify(notificationID,
-							new NotificationCompat.Builder(ApplicationContext, channel)
-								.SetContentTitle(title)
-								.SetContentText(text)
-								.SetSmallIcon(Resource.Mipmap.ic_launcher)
-								.Build()
+					NotificationCompat.Builder notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl")
+						.SetProgress(0, 100, false)
+						.SetSmallIcon(Resource.Mipmap.ic_launcher);
+
+					void makeNotif(string title, string text) {
+						manager.Notify(notificationID, notif
+							.SetContentTitle(title)
+							.SetContentText(text)
+							.Build()
 						);
+					}
 
 					try {
 						var client = new YoutubeClient();
 						var video = await client.Videos.GetAsync(videoId);
 						var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
+						notif.SetContentTitle(video.Title);
 
 						if (audioStream != null) {
 							string fileName = Path.Combine(
@@ -85,23 +88,21 @@ namespace YoutubeDL {
 								SanitizeFilename(video.Title) + ".mp3"
 							);
 
-							var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
-								.SetContentTitle(video.Title)
-								.SetProgress(0, 100, false)
-								.SetSmallIcon(Resource.Mipmap.ic_launcher);
-
 							await client.Videos.Streams.DownloadAsync(audioStream, fileName, new Progress<double>(p => {
 								notif.SetProgress(100, (int) (p * 100), false);
 								manager.Notify(notificationID, notif.Build());
 							}));
 
-							makeNotif(video.Title, "Finished downloading", "youtubedl.finished");
+							await Task.Delay(1000); // Hack because it only works half the time, for some reason
+
+							notif.SetProgress(0, 0, false);
+							makeNotif(video.Title, "Finished downloading");
 						} else {
-							makeNotif(video.Title, "This video cannot be downloaded. A future update may fix this.", "youtubedl.failed.nostreams");
+							makeNotif(video.Title, "This video cannot be downloaded. A future update may fix this.");
 						}
 					} catch (Exception e) {
 						Log.Error(LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + videoId.Value);
-						makeNotif(e.GetType().Name, "Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.", "youtubedl.failed.exception");
+						makeNotif(e.GetType().Name, "Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.");
 					}
 				});
 			}

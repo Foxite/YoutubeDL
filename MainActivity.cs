@@ -82,7 +82,7 @@ namespace YoutubeDL {
 						if (audioStream != null) {
 							string fileName = Path.Combine(
 								Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads).AbsolutePath,
-								video.Title + ".mp3"
+								SanitizeFilename(video.Title) + ".mp3"
 							);
 
 							var notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl.progress")
@@ -126,6 +126,17 @@ namespace YoutubeDL {
 			Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+
+		private string SanitizeFilename(string inputStr) {
+			char[] input = inputStr.ToCharArray();
+			char[] invalidChars = Path.GetInvalidFileNameChars();
+			for (int i = 0; i < input.Length; i++) {
+				if (invalidChars.Contains(input[i])) {
+					input[i] = '_';
+				}
+			}
+			return new string(input);
 		}
 	}
 }

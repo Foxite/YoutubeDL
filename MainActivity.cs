@@ -68,7 +68,7 @@ namespace YoutubeDL {
 					var videoId = new VideoId(youtubeUrl);
 
 					NotificationCompat.Builder notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl")
-						.SetProgress(0, 100, false)
+						.SetProgress(0, 100, true)
 						.SetSmallIcon(Resource.Mipmap.ic_launcher);
 
 					void makeNotif(string title, string text) {
@@ -82,6 +82,9 @@ namespace YoutubeDL {
 					try {
 						var client = new YoutubeClient();
 						var video = await client.Videos.GetAsync(videoId);
+
+						makeNotif(video.Title, "Downloading");
+
 						var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
 						notif.SetContentTitle(video.Title);
 
@@ -96,7 +99,14 @@ namespace YoutubeDL {
 								manager.Notify(notificationID, notif.Build());
 							}));
 
-							await Task.Delay(1000); // Hack because it only works half the time, for some reason
+							// In the emulator running android 9, this part executes correctly about half the time. It would show the last bit of progress, and never update it with "Complete".
+							// If you debug it, it executes correctly every time.
+							// On my phone running android 7, it executes correctly every time.
+							// If you increase the delay, it executes correctly more often in the emulator. I have found that 500 ms is ideal.
+							// Does this problem even exist on a phone running android 9?
+							// I have no idea.
+							// I gave up after two hours of fucking with this code.
+							await Task.Delay(500);
 
 							notif.SetProgress(0, 0, false);
 							makeNotif(video.Title, "Finished downloading");
@@ -105,7 +115,7 @@ namespace YoutubeDL {
 						}
 					} catch (Exception e) {
 						Log.Error(LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + videoId.Value);
-						makeNotif(e.GetType().Name, "Cannot download video because an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.");
+						makeNotif(e.GetType().Name, "Cannot download video because of an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.");
 					}
 				});
 			}

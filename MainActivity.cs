@@ -56,15 +56,18 @@ namespace YoutubeDL {
 
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
-				Finish(); // doesn't work
+				Finish(); // works inconsistently
 				Task.Run(async () => {
 					int notificationID = s_NextNotificationID++;
 					var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
-					manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Default));
+
+					if (Build.VERSION.SdkInt >= BuildVersionCodes.O) {
+						manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Default));
+					}
 
 					var videoId = new VideoId(youtubeUrl);
 
-					NotificationCompat.Builder notif = new NotificationCompat.Builder(base.ApplicationContext, "youtubedl")
+					NotificationCompat.Builder notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl")
 						.SetProgress(0, 100, false)
 						.SetSmallIcon(Resource.Mipmap.ic_launcher);
 

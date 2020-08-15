@@ -18,7 +18,7 @@ using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
 
 namespace YoutubeDL {
-	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
+	[Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar")]
 	[IntentFilter(
 		new[] { Intent.ActionSend },
 		Categories = new[] { Intent.CategoryDefault },
@@ -30,30 +30,22 @@ namespace YoutubeDL {
 		private static int s_NextNotificationID;
 
 		protected override void OnCreate(Bundle savedInstanceState) {
-			// TODO planned features:
-			// - History in main activity
-			// - Configure download location
-			// - Configure download type (support all types available)
-			// - Move hardcoded strings to strings.xml
 			base.OnCreate(savedInstanceState);
 			Xamarin.Essentials.Platform.Init(this, savedInstanceState);
-			SetContentView(Resource.Layout.activity_main);
 
-			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.WriteExternalStorage) != (int) Permission.Granted) {
-				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.WriteExternalStorage }, 0);
+			string[] requiredPermissions = new string[] { Manifest.Permission.Internet, Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage };
+			if (requiredPermissions.Any(perm => ContextCompat.CheckSelfPermission(this, perm) != Permission.Granted)) {
+				ActivityCompat.RequestPermissions(this, requiredPermissions, 0);
+			} else {
+				DoDownload();
 			}
 
-			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.ReadExternalStorage) != (int) Permission.Granted) {
-				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.ReadExternalStorage }, 0);
-			}
+			Finish();
+		}
 
-			if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.Internet) != (int) Permission.Granted) {
-				ActivityCompat.RequestPermissions(this, new string[] { Manifest.Permission.Internet }, 0);
-			}
-
+		private void DoDownload() {
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
-				Finish(); // works inconsistently
 				Task.Run(async () => {
 					int notificationID = s_NextNotificationID++;
 					var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
@@ -119,25 +111,12 @@ namespace YoutubeDL {
 			}
 		}
 
-		public override bool OnCreateOptionsMenu(IMenu menu) {
-			MenuInflater.Inflate(Resource.Menu.menu_main, menu);
-			return true;
-		}
-
-		public override bool OnOptionsItemSelected(IMenuItem item) {
-			int id = item.ItemId;
-			if (id == Resource.Id.action_settings) {
-				// Open the options menu here
-				return true;
-			}
-
-			return base.OnOptionsItemSelected(item);
-		}
-
 		public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults) {
 			Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
 			base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+
+			DoDownload();
 		}
 
 		private string SanitizeFilename(string inputStr) {

@@ -1,0 +1,7 @@
+This app lets you download Youtube videos by simply sharing them to the app. If successful, an mp3 file will appear in your Downloads folder moments after you shared the video.
+
+It does not have an icon in your launcher. You only need to share the video.
+
+Given the nature of how Youtube downloading works, it is possible that this app stops working at any time. The scraping library will generally be updated some days after a new version becomes available, but you can post an issue to Github to accelerate this process.
+
+This app may violate Youtube's TOS, the developer is not responsible for anything that happens.

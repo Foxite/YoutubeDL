@@ -1,0 +1,7 @@
+Met deze app kun je snel Youtube-videos downloaden door ze naar de app te delen. Als het gelukt is, komt er een mp3-bestand in je Downloads-map kort nadat je de video hebt gedeeld.
+
+De app heeft geen icoon in je launcher. Je hoeft alleen de video te delen.
+
+Vanwege de manier waarop Youtube downloading werkt, is het mogelijk dat de app opeens niet meer werkt. De scraping-library wordt meestal een paar dagen nadat er een update is bijgewerkt, maar dit kun je versnellen door een issue aan te maken op Github.
+
+Deze app is misschien in strijd met de TOS van Youtube, de ontwikkelaar is niet verantwoordelijk voor alles wat er gebeurt.

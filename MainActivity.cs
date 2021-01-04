@@ -10,9 +10,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Support.V4.App;
 using Android.Support.V4.Content;
-using Android.Support.V7.App;
 using Android.Util;
-using Android.Views;
 using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
@@ -24,7 +22,7 @@ namespace YoutubeDL {
 		Categories = new[] { Intent.CategoryDefault },
 		DataHosts = new[] { "youtube.com", "youtu.be" },
 		DataMimeType = "text/plain")]
-	public class MainActivity : AppCompatActivity {
+	public class MainActivity : Activity {
 		private const string LogTag = "FOXITE_YOUTUBE_DL";
 
 		private static int s_NextNotificationID;

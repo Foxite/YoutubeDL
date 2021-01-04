@@ -8,6 +8,10 @@ This app will likely never be released to Google Play. For an explanation, try t
 
 In the meantime, you can [download a released apk](https://github.com/Foxite/YoutubeDL/releases). To install those, you need to enable downloading apps from unknown sources. You may consult a search engine if you don't know how to do this.
 
+Alternatively, get it on a temporary, non-official F-Droid-compatible repository.
+
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="170">](https://apt.izzysoft.de/fdroid/index/apk/nl.dirkkok.android.youtubedl)
+
 ## Instructions
 Once installed, usage is very simple:
 

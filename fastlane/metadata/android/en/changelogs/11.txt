@@ -1,0 +1,2 @@
+- Fixed app icon.
+- Fixed download notification.

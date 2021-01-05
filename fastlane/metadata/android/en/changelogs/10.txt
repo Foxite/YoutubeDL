@@ -1,0 +1,1 @@
+- Removed unnecessary dependencies, including a reference to Google Play Services.

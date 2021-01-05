@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android;
 using Android.App;
@@ -42,29 +43,35 @@ namespace YoutubeDL {
 		}
 
 		private void DoDownload() {
+			// Major threaded spaghetti below.
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);
+
 				Task.Run(async () => {
 					int notificationID = s_NextNotificationID++;
 					var manager = (NotificationManager) GetSystemService(Java.Lang.Class.FromType(typeof(NotificationManager)));
-
 					if (Build.VERSION.SdkInt >= BuildVersionCodes.O) {
-						manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Default));
+						manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Low));
 					}
 
 					var videoId = new VideoId(youtubeUrl);
 
 					NotificationCompat.Builder notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl")
 						.SetProgress(0, 100, true)
+						.SetOngoing(true)
+						.SetSound(null)
 						.SetSmallIcon(Resource.Mipmap.ic_launcher);
 
 					void makeNotif(string title, string text) {
-						manager.Notify(notificationID, notif
+						manager.Notify("Download", notificationID, notif
 							.SetContentTitle(title)
 							.SetContentText(text)
 							.Build()
 						);
 					}
+
+					var rwls = new ReaderWriterLockSlim();
+					double progress = 0;
 
 					try {
 						var client = new YoutubeClient();
@@ -81,29 +88,55 @@ namespace YoutubeDL {
 								SanitizeFilename(video.Title) + ".mp3"
 							);
 
+							Task notifLoop = Task.Run(async () => {
+								while (true) {
+									rwls.EnterReadLock();
+									if (progress == -1) {
+										rwls.ExitReadLock();
+										return;
+									} else if (progress >= 1) {
+										notif.SetProgress(0, 0, false);
+										notif.SetOngoing(false);
+										makeNotif(video.Title, "Finished downloading");
+										rwls.ExitReadLock();
+										return;
+									} else {
+										notif.SetProgress(100, (int) (progress * 100), false);
+										manager.Notify("Download", notificationID, notif.Build());
+										notif.SetOngoing(true);
+										rwls.ExitReadLock();
+									}
+									await Task.Delay(TimeSpan.FromMilliseconds(500));
+								}
+							});
+
 							await client.Videos.Streams.DownloadAsync(audioStream, fileName, new Progress<double>(p => {
-								notif.SetProgress(100, (int) (p * 100), false);
-								manager.Notify(notificationID, notif.Build());
+								try {
+									rwls.EnterWriteLock();
+									if (progress != -1) {
+										progress = p;
+									}
+								} finally {
+									rwls.ExitWriteLock();
+								}
 							}));
 
-							// In the emulator running android 9, this part executes correctly about half the time. It would show the last bit of progress, and never update it with "Complete".
-							// If you debug it, it executes correctly every time.
-							// On my phone running android 7, it executes correctly every time.
-							// If you increase the delay, it executes correctly more often in the emulator. I have found that 500 ms is ideal.
-							// Does this problem even exist on a phone running android 9?
-							// I have no idea.
-							// I gave up after two hours of fucking with this code.
-							await Task.Delay(500);
+							rwls.EnterWriteLock();
+							progress = 1;
+							rwls.ExitWriteLock();
 
-							notif.SetProgress(0, 0, false);
-							makeNotif(video.Title, "Finished downloading");
+							await notifLoop;
 						} else {
 							makeNotif(video.Title, "This video cannot be downloaded. A future update may fix this.");
 						}
 					} catch (Exception e) {
+						rwls.EnterWriteLock();
 						Log.Error(LogTag, Java.Lang.Throwable.FromException(e), "Exception when trying to download video " + videoId.Value);
 						notif.SetProgress(0, 0, false);
+						notif.SetOngoing(false);
+						progress = -1;
 						makeNotif(e.GetType().Name, "Cannot download video because of an unknown error. Trying again may fix the problem. If this persists, contact the developer, and include a link to the video you downloaded.");
+						rwls.ExitWriteLock();
 					}
 				});
 			}

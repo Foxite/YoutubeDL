@@ -38,11 +38,10 @@ namespace YoutubeDL {
 			} else {
 				DoDownload();
 			}
-
-			Finish();
 		}
 
 		private void DoDownload() {
+			Finish();
 			// Major threaded spaghetti below.
 			if (Intent?.Extras != null) {
 				string youtubeUrl = Intent.GetStringExtra(Intent.ExtraText);

@@ -98,7 +98,7 @@
   <ItemGroup>
     <PackageReference Include="Xamarin.Essentials" Version="1.6.0" />
     <PackageReference Include="YoutubeExplode">
-      <Version>5.1.9</Version>
+      <Version>6.0.0-alpha2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

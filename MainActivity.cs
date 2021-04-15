@@ -89,20 +89,21 @@ namespace YoutubeDL {
 
 							Task notifLoop = Task.Run(async () => {
 								while (true) {
-									rwls.EnterReadLock();
-									if (progress == -1) {
-										rwls.ExitReadLock();
-										return;
-									} else if (progress >= 1) {
-										notif.SetProgress(0, 0, false);
-										notif.SetOngoing(false);
-										makeNotif(video.Title, "Finished downloading");
-										rwls.ExitReadLock();
-										return;
-									} else {
-										notif.SetProgress(100, (int) (progress * 100), false);
-										manager.Notify("Download", notificationID, notif.Build());
-										notif.SetOngoing(true);
+									try {
+										rwls.EnterReadLock();
+										if (progress == -1) {
+											return;
+										} else if (progress >= 1) {
+											notif.SetProgress(0, 0, false);
+											notif.SetOngoing(false);
+											makeNotif(video.Title, "Finished downloading");
+											return;
+										} else {
+											notif.SetProgress(100, (int) (progress * 100), false);
+											manager.Notify("Download", notificationID, notif.Build());
+											notif.SetOngoing(true);
+										}
+									} finally {
 										rwls.ExitReadLock();
 									}
 									await Task.Delay(TimeSpan.FromMilliseconds(500));

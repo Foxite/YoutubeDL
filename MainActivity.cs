@@ -53,7 +53,7 @@ namespace YoutubeDL {
 						manager.CreateNotificationChannel(new NotificationChannel("youtubedl", "YoutubeDL", NotificationImportance.Low));
 					}
 
-					var videoId = new VideoId(youtubeUrl);
+					var videoId = VideoId.Parse(youtubeUrl);
 
 					NotificationCompat.Builder notif = new NotificationCompat.Builder(ApplicationContext, "youtubedl")
 						.SetProgress(0, 100, true)
@@ -78,7 +78,7 @@ namespace YoutubeDL {
 
 						makeNotif(video.Title, "Downloading");
 
-						var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnly().Where(info => info.Container == Container.Mp4).WithHighestBitrate();
+						var audioStream = (await client.Videos.Streams.GetManifestAsync(videoId)).GetAudioOnlyStreams().Where(info => info.Container == Container.Mp4).GetWithHighestBitrate();
 						notif.SetContentTitle(video.Title);
 
 						if (audioStream != null) {
